@@ -169,3 +169,31 @@ class Preprocessing:
                  mask_keep.append(True)
                  
         return df[mask_keep]
+
+    def process_data(self, df, date_column='Authorized On', frequency='daily', country='CA', prov='ON'):
+        """
+        Runs the complete preprocessing pipeline:
+        1. Standardize patient types (Urgent/Semi-urgent).
+        2. Count arrivals by date (filling missing dates).
+        3. Remove non-business days (weekends/holidays) where counts are 0.
+        
+        Args:
+            df (pd.DataFrame): Raw input data.
+            date_column (str): Column to use for dates (default 'Authorized On').
+            frequency (str): Frequency for counting (default 'daily').
+            country (str): Country code for holidays (default 'CA').
+            prov (str): Province/State code for holidays (default 'ON').
+            
+        Returns:
+            pd.DataFrame: Processed dataframe with date index, counts by type, and sum.
+        """
+        # 1. Standardize
+        df_std = self.standardize_patient_types(df)
+        
+        # 2. Count Arrivals (includes fill_missing_dates)
+        counts = self.count_arrivals(df_std, date_column=date_column, frequency=frequency)
+        
+        # 3. Remove Off Dates (Weekends/Holidays with 0 arrivals)
+        final_df = self.remove_off_dates(counts, country=country, prov=prov)
+        
+        return final_df
