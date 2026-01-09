@@ -213,6 +213,11 @@ class Preprocessing:
         # 4. Remove Off Dates (Weekends/Holidays with 0 arrivals)
         final_df = self.remove_off_dates(counts, country=country, prov=prov)
         
+        # 5. Format Index for Display
+        if frequency in ['yearly', 'Y', 'YE']:
+            final_df.index = final_df.index.year
+            final_df.index.name = date_column # Restore name if lost
+            
         return final_df
 
     def _drop_incomplete_rows(self, df):
