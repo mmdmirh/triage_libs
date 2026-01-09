@@ -170,15 +170,16 @@ class Preprocessing:
                  
         return df[mask_keep]
 
-    def process_data(self, df, date_column='Authorized On', frequency='daily', country='CA', prov='ON'):
+    def process_data(self, data, date_column='Authorized On', frequency='daily', country='CA', prov='ON'):
         """
         Runs the complete preprocessing pipeline:
-        1. Standardize patient types (Urgent/Semi-urgent).
-        2. Count arrivals by date (filling missing dates).
-        3. Remove non-business days (weekends/holidays) where counts are 0.
+        1. Load data (if file path provided).
+        2. Standardize patient types (Urgent/Semi-urgent).
+        3. Count arrivals by date (filling missing dates).
+        4. Remove non-business days (weekends/holidays) where counts are 0.
         
         Args:
-            df (pd.DataFrame): Raw input data.
+            data (pd.DataFrame or str): Raw input dataframe or file path.
             date_column (str): Column to use for dates (default 'Authorized On').
             frequency (str): Frequency for counting (default 'daily').
             country (str): Country code for holidays (default 'CA').
@@ -187,6 +188,16 @@ class Preprocessing:
         Returns:
             pd.DataFrame: Processed dataframe with date index, counts by type, and sum.
         """
+        # 0. Load Data if string is passed
+        if isinstance(data, str):
+            from .data_loader import DataLoader
+            loader = DataLoader()
+            df = loader.read_file(data)
+        elif isinstance(data, pd.DataFrame):
+             df = data
+        else:
+             raise ValueError("Input 'data' must be a pandas DataFrame or a file path string.")
+
         # 1. Standardize
         df_std = self.standardize_patient_types(df)
         
