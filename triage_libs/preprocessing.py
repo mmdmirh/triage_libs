@@ -24,6 +24,8 @@ class Preprocessing:
             return val
 
         if column_name in df.columns:
+            # Use .loc to avoid SettingWithCopyWarning if df is a slice
+            df = df.copy() 
             df[column_name] = df[column_name].apply(standardize)
         return df
 
@@ -40,6 +42,9 @@ class Preprocessing:
         Returns:
             pd.DataFrame: DataFrame with index as date and columns as patient types (urgent, semiurgent).
         """
+        # Ensure working on a copy to avoid SettingWithCopyWarning
+        df = df.copy()
+
         # Ensure date column is datetime
         df[date_column] = pd.to_datetime(df[date_column])
         
