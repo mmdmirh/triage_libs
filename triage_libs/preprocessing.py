@@ -52,8 +52,8 @@ class Preprocessing:
         freq_map = {
             'daily': 'D',
             'weekly': 'W-SUN', # Ends on Sunday, so covers Mon-Sun
-            'monthly': 'M',    # Month end
-            'yearly': 'Y'      # Year end
+            'monthly': 'ME',    # Month end
+            'yearly': 'YE'      # Year end
         }
         
         if frequency not in freq_map:
@@ -83,8 +83,8 @@ class Preprocessing:
         freq_map = {
             'daily': 'D',
             'weekly': 'W-SUN',
-            'monthly': 'M',
-            'yearly': 'Y'
+            'monthly': 'ME',
+            'yearly': 'YE'
         }
         
         if frequency not in freq_map:
