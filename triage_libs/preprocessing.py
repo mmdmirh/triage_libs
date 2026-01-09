@@ -170,7 +170,7 @@ class Preprocessing:
                  
         return df[mask_keep]
 
-    def process_data(self, data, date_column='Authorized On', frequency='daily', country='CA', prov='ON'):
+    def preprocess_data(self, data, date_column='Authorized On', frequency='daily', country='CA', prov='ON'):
         """
         Runs the complete preprocessing pipeline:
         1. Load data (if file path provided).
