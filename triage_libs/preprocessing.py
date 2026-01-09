@@ -200,17 +200,51 @@ class Preprocessing:
         else:
              raise ValueError("Input 'data' must be a pandas DataFrame or a file path string.")
 
-        # 1. Optional Clean (dropna / cancelled)
-        if drop_cancelled:
-            df = df.dropna()
+        # 1. Standardize (do this FIRST so we can count dropped types correctly)
+        df = self.standardize_patient_types(df)
 
-        # 2. Standardize
-        df_std = self.standardize_patient_types(df)
+        # 2. Optional Clean (dropna / cancelled)
+        if drop_cancelled:
+            df = self._drop_incomplete_rows(df)
         
-        # 2. Count Arrivals (includes fill_missing_dates)
-        counts = self.count_arrivals(df_std, date_column=date_column, frequency=frequency)
+        # 3. Count Arrivals (includes fill_missing_dates)
+        counts = self.count_arrivals(df, date_column=date_column, frequency=frequency)
         
-        # 3. Remove Off Dates (Weekends/Holidays with 0 arrivals)
+        # 4. Remove Off Dates (Weekends/Holidays with 0 arrivals)
         final_df = self.remove_off_dates(counts, country=country, prov=prov)
         
         return final_df
+
+    def _drop_incomplete_rows(self, df):
+        """
+        Drops rows with missing values and logs the count by priority type.
+        """
+        initial_count = len(df)
+        
+        # Identify rows to drop
+        # We need to see which rows have nulls
+        mask_null = df.isna().any(axis=1)
+        rows_to_drop = df[mask_null]
+        
+        dropped_count = len(rows_to_drop)
+        
+        if dropped_count > 0:
+            # Count details by type
+            # Assuming 'Priority Type (RFL)' is the column, and it's already standardized
+            type_col = 'Priority Type (RFL)'
+            
+            semi_count = 0
+            urgent_count = 0
+            
+            if type_col in rows_to_drop.columns:
+                counts = rows_to_drop[type_col].value_counts()
+                semi_count = counts.get('semiurgent', 0)
+                urgent_count = counts.get('urgent', 0)
+                
+            print(f"Dropped {dropped_count} rows containing missing values (potential cancellations).")
+            print(f"  - Semi-urgents: {semi_count}")
+            print(f"  - Urgents: {urgent_count}")
+            print(f"  - Total: {dropped_count}")
+        
+        # Return cleaned dataframe
+        return df.dropna()
