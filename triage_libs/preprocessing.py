@@ -216,7 +216,10 @@ class Preprocessing:
         # 5. Format Index for Display
         if frequency in ['yearly', 'Y', 'YE']:
             final_df.index = final_df.index.year
-            final_df.index.name = date_column # Restore name if lost
+        elif frequency in ['monthly', 'M', 'ME']:
+            final_df.index = final_df.index.to_period('M')
+
+        final_df.index.name = date_column # Restore name if lost
             
         return final_df
 
