@@ -170,13 +170,14 @@ class Preprocessing:
                  
         return df[mask_keep]
 
-    def preprocess_data(self, data, date_column='Authorized On', frequency='daily', country='CA', prov='ON'):
+    def preprocess_data(self, data, date_column='Authorized On', frequency='daily', country='CA', prov='ON', drop_cancelled=False):
         """
         Runs the complete preprocessing pipeline:
         1. Load data (if file path provided).
-        2. Standardize patient types (Urgent/Semi-urgent).
-        3. Count arrivals by date (filling missing dates).
-        4. Remove non-business days (weekends/holidays) where counts are 0.
+        2. (Optional) Drop row with missing values (e.g. cancelled appointments).
+        3. Standardize patient types (Urgent/Semi-urgent).
+        4. Count arrivals by date (filling missing dates).
+        5. Remove non-business days (weekends/holidays) where counts are 0.
         
         Args:
             data (pd.DataFrame or str): Raw input dataframe or file path.
@@ -184,6 +185,7 @@ class Preprocessing:
             frequency (str): Frequency for counting (default 'daily').
             country (str): Country code for holidays (default 'CA').
             prov (str): Province/State code for holidays (default 'ON').
+            drop_cancelled (bool): If True, drops rows with any missing values (default False).
             
         Returns:
             pd.DataFrame: Processed dataframe with date index, counts by type, and sum.
@@ -198,7 +200,11 @@ class Preprocessing:
         else:
              raise ValueError("Input 'data' must be a pandas DataFrame or a file path string.")
 
-        # 1. Standardize
+        # 1. Optional Clean (dropna / cancelled)
+        if drop_cancelled:
+            df = df.dropna()
+
+        # 2. Standardize
         df_std = self.standardize_patient_types(df)
         
         # 2. Count Arrivals (includes fill_missing_dates)
