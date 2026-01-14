@@ -11,7 +11,7 @@ class TimeSeriesAnalyzer:
         # Suppress warnings for cleaner output
         warnings.filterwarnings("ignore")
 
-    def decompose_stl(self, data, period=7, seasonal=13):
+    def decompose_stl(self, data, period=7, seasonal=13, pationt_type):
         """
         Performs STL Decomposition on the time series.
         
@@ -19,18 +19,17 @@ class TimeSeriesAnalyzer:
             data (pd.Series or pd.DataFrame): Time series data.
             period (int, optional): Periodicity of the sequence (default 7).
             seasonal (int): Seasonal smoother length (must be odd).
+            pationt_type (str, mandatory): Specific column to analyze if data is a DataFrame.
         """
         print("\n--- Performing STL Decomposition ---")
         
         # Handle DataFrame input
         if isinstance(data, pd.DataFrame):
-            if 'sum' in data.columns:
-                print("Note: DataFrame passed. Using 'sum' column for decomposition.")
-                data = data['sum']
+            if pationt_type.lower() in data.columns:
+                print(f"Using specified column: '{pationt_type}'")
+                data = data[pationt_type]
             else:
-                col = data.columns[0]
-                print(f"Note: DataFrame passed. 'sum' column not found. Using first column: '{col}'")
-                data = data[col]
+                raise ValueError(f"Pationt type '{pationt_type}' not found in DataFrame. Available columns: {data.columns.tolist()}")
         
         print(f"Using Period: {period}, Seasonal: {seasonal}")
         
