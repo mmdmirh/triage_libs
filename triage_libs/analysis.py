@@ -16,11 +16,21 @@ class TimeSeriesAnalyzer:
         Performs STL Decomposition on the time series.
         
         Args:
-            data (pd.Series): Time series data with a DatetimeIndex or PeriodIndex.
+            data (pd.Series or pd.DataFrame): Time series data.
             period (int, optional): Periodicity of the sequence (default 7).
             seasonal (int): Seasonal smoother length (must be odd).
         """
         print("\n--- Performing STL Decomposition ---")
+        
+        # Handle DataFrame input
+        if isinstance(data, pd.DataFrame):
+            if 'sum' in data.columns:
+                print("Note: DataFrame passed. Using 'sum' column for decomposition.")
+                data = data['sum']
+            else:
+                col = data.columns[0]
+                print(f"Note: DataFrame passed. 'sum' column not found. Using first column: '{col}'")
+                data = data[col]
         
         print(f"Using Period: {period}, Seasonal: {seasonal}")
         
