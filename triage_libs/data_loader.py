@@ -4,6 +4,7 @@ import os
 import getpass
 import io
 import zipfile
+import warnings
 try:
     import xlrd
 except ImportError:
@@ -28,7 +29,9 @@ class DataLoader:
             return pd.read_csv(file_path)
         elif ext in ['.xlsx', '.xls']:
             try:
-                return pd.read_excel(file_path)
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
+                    return pd.read_excel(file_path)
             except (zipfile.BadZipFile, xlrd.XLRDError if xlrd else Exception) as e:
                 # If msoffcrypto is available, try to decrypt
                 if msoffcrypto:
@@ -43,7 +46,9 @@ class DataLoader:
                             office_file.decrypt(decrypted_workbook)
                         
                         print("Decryption successful. Loading data...")
-                        return pd.read_excel(decrypted_workbook)
+                        with warnings.catch_warnings():
+                            warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
+                            return pd.read_excel(decrypted_workbook)
                     except Exception as decrypt_error:
                         print(f"Failed to decrypt or load file: {decrypt_error}")
                         raise e # Raise original error if decryption fails
@@ -53,7 +58,9 @@ class DataLoader:
             except Exception:
                  # Fallback/Retry if needed
                  if ext == '.xlsx':
-                     return pd.read_excel(file_path, engine='openpyxl')
+                     with warnings.catch_warnings():
+                        warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
+                        return pd.read_excel(file_path, engine='openpyxl')
                  else:
                      return pd.read_excel(file_path, engine='xlrd')
         else:
