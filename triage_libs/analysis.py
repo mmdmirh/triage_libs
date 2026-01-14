@@ -11,7 +11,7 @@ class TimeSeriesAnalyzer:
         # Suppress warnings for cleaner output
         warnings.filterwarnings("ignore")
 
-    def decompose_stl(self, data, period=7, seasonal=13, pationt_type):
+    def decompose_stl(self, data, pationt_type, period=7, seasonal=13):
         """
         Performs STL Decomposition on the time series.
         
