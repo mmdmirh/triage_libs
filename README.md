@@ -15,3 +15,9 @@ For editable mode (if you want changes in the code to be reflected immediately):
 ```bash
 pip install -e .
 ```
+
+You can also install it directly from GitHub:
+
+```bash
+pip install git+https://github.com/mmdmirh/triage_libs.git
+```
