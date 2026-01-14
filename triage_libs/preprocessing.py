@@ -218,6 +218,8 @@ class Preprocessing:
             final_df.index = final_df.index.year
         elif frequency in ['monthly', 'M', 'ME']:
             final_df.index = final_df.index.to_period('M')
+        elif frequency in ['weekly', 'W', 'W-SUN']:
+            final_df.index = final_df.index.to_period('W')
 
         final_df.index.name = date_column # Restore name if lost
             
