@@ -9,6 +9,7 @@ setup(
         "openpyxl",
         "xlrd>=2.0.1",
         "holidays",
+        "msoffcrypto-tool",
     ],
     author="Mohamad",
     author_email="mirhos5@mcmaster.ca",
