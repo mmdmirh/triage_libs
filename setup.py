@@ -12,4 +12,5 @@ setup(
     ],
     author="Mohamad",
     description="Triage data preprocessing and loading libraries",
+    url="https://mmdmirh.github.io/triage_libs/",
 )
