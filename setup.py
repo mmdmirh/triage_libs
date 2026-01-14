@@ -11,6 +11,7 @@ setup(
         "holidays",
     ],
     author="Mohamad",
+    author_email="mirhos5@mcmaster.ca",
     description="Triage data preprocessing and loading libraries",
     url="https://mmdmirh.github.io/triage_libs/",
 )
