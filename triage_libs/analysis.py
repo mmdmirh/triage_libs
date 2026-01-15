@@ -132,14 +132,15 @@ class TimeSeriesAnalyzer:
     def run_full_analysis(self, data, pationt_type, period=7, seasonal=13):
         """
         Runs the complete analysis pipeline sequentially:
-        1. Decompose STL
-        2. Plot Decomposition
-        3. Analyze Residuals (fit distributions)
-        4. Plot Residuals Distribution
-        5. Select Best Distribution
+        1. Load Data (if file path provided)
+        2. Decompose STL
+        3. Plot Decomposition
+        4. Analyze Residuals (fit distributions)
+        5. Plot Residuals Distribution
+        6. Select Best Distribution
         
         Args:
-            data: DataFrame or Series.
+            data: DataFrame, Series, or string (file path to Excel/CSV).
             pationt_type: Column name to analyze.
             period: Periodicity (default 7).
             seasonal: Seasonal smoother (default 13).
@@ -147,6 +148,15 @@ class TimeSeriesAnalyzer:
         Returns:
             dict: The stats of the best fitting distribution.
         """
+        # 0. Handle File Path Input
+        if isinstance(data, str):
+            print(f"File path detected: {data}")
+            from .preprocessing import Preprocessing
+            pre = Preprocessing()
+            # Auto-load with defaults, drop_cancelled=True is safer for analysis
+            data = pre.preprocess_data(data, drop_cancelled=True)
+            print("Data loaded and preprocessed successfully.")
+
         # 1. Decompose
         result = self.decompose_stl(data, pationt_type, period, seasonal)
         
