@@ -10,15 +10,10 @@ from statsmodels.stats.diagnostic import acorr_ljungbox
 import scipy.stats as stats
 
 class ARIMAModeler:
-    def __init__(self, data):
+    def __init__(self):
         """
         Initialize the ARIMAModeler.
-        
-        Args:
-            data (pd.Series or pd.DataFrame): Time series data. 
-                                              If DataFrame, specific column checks should be done prior.
         """
-        self.data = data
         self.model_result = None
         self.best_order = None
         self.best_seasonal_order = None
@@ -26,11 +21,12 @@ class ARIMAModeler:
         # Suppress convergence warnings during grid search
         warnings.filterwarnings("ignore")
 
-    def find_best_model(self, max_p=3, max_d=2, max_q=3, seasonal=False, m=12):
+    def find_best_model(self, data, max_p=3, max_d=2, max_q=3, seasonal=False, m=12):
         """
         Performs a grid search to find the best ARIMA/SARIMA model based on AIC.
         
         Args:
+            data (pd.Series or pd.DataFrame): Time series data.
             max_p (int): Max AR terms.
             max_d (int): Max differencing terms.
             max_q (int): Max MA terms.
@@ -67,7 +63,7 @@ class ARIMAModeler:
             for param_seasonal in seasonal_pdq:
                 counter += 1
                 try:
-                    model = SARIMAX(self.data,
+                    model = SARIMAX(data,
                                     order=param,
                                     seasonal_order=param_seasonal,
                                     enforce_stationarity=False,
@@ -94,14 +90,14 @@ class ARIMAModeler:
         
         return best_param, best_seasonal_param, best_aic
 
-    def fit_model(self, order, seasonal_order=(0, 0, 0, 0)):
+    def fit_model(self, data, order, seasonal_order=(0, 0, 0, 0)):
         """
         Fits a SARIMAX model with the specified parameters.
         """
         print(f"\nFitting model with order={order}, seasonal_order={seasonal_order}...")
         
         try:
-            model = SARIMAX(self.data,
+            model = SARIMAX(data,
                             order=order,
                             seasonal_order=seasonal_order,
                             enforce_stationarity=False,
@@ -162,12 +158,13 @@ class ARIMAModeler:
         else:
             print("WARNING: Residuals are not independent (Autocorrelation exists). Try different parameters.")
 
-    def forecast(self, steps=12):
+    def forecast(self, steps=12, data=None):
         """
         Generates forecasts for fiture steps.
         
         Args:
             steps (int): Number of steps to forecast.
+            data (pd.Series or pd.DataFrame, optional): Original data to plot context.
             
         Returns:
             pd.DataFrame: Forecast frame with 'mean', 'mean_ci_lower', 'mean_ci_upper'.
@@ -191,8 +188,9 @@ class ARIMAModeler:
         # Plotting Forecast
         plt.figure(figsize=(12, 6))
         
-        # Plot observed data
-        plt.plot(self.data.index, self.data, label='Observed')
+        # Plot observed data if provided
+        if data is not None:
+            plt.plot(data.index, data, label='Observed')
         
         # Plot Forecast
         plt.plot(forecast_df.index, forecast_df['forecast'], label='Forecast', color='red')
