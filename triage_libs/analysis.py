@@ -55,7 +55,9 @@ class TimeSeriesAnalyzer:
         distributions = {
             "Normal": stats.norm,
             "Laplace": stats.laplace,
-            "Student's t": stats.t
+            "Student's t": stats.t,
+            "Logistic": stats.logistic,
+            "Cauchy": stats.cauchy
         }
         
         results = {}
