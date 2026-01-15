@@ -180,18 +180,42 @@ class TimeSeriesAnalyzer:
             print(f"Selected '{best_name}' based on lowest AIC only.")
             return best_name, fit_results[best_name]
 
-    def run_full_analysis(self, data, pationt_type, period=7, seasonal=13):
+    def check_residuals_autocorrelation(self, residuals, lags=40):
         """
-        Runs the complete analysis pipeline sequentially:
-        1. Load Data (if file path provided)
-        2. Decompose STL
-        3. Plot Decomposition
+        Checks for autocorrelation in residuals using ACF plot and Ljung-Box test.
+        """
+        print("\n--- Checking Residuals Autocorrelation ---")
+        
+        # 1. Plot ACF
+        from statsmodels.graphics.tsaplots import plot_acf
+        plt.figure(figsize=(10, 5))
+        plot_acf(residuals, lags=lags, alpha=0.05, title='Autocorrelation of Residuals')
+        plt.show()
+        
+        # 2. Ljung-Box Test
+        from statsmodels.stats.diagnostic import acorr_ljungbox
+        lb_test = acorr_ljungbox(residuals, lags=[10], return_df=True)
+        p_val = lb_test['lb_pvalue'].iloc[0]
+        
+        print(f"Ljung-Box Test (lag=10): p-value = {p_val:.4f}")
+        if p_val < 0.05:
+             print("WARNING: p-value < 0.05. Residuals are NOT White Noise (Autocorrelation detected).")
+             print("This suggests the decomposition model (Trend/Seasonality) might be incomplete.")
+        else:
+             print("SUCCESS: p-value > 0.05. Residuals appear to be random White Noise.")
+
+    def run_statistical_analysis(self, data, pationt_type, period=7, seasonal=13):
+        """
+        Runs the complete statistical analysis pipeline sequentially:
+        1. Decompose STL
+        2. Plot Decomposition
+        3. Check Residuals Autocorrelation (Diagnostics)
         4. Analyze Residuals (fit distributions)
         5. Plot Residuals Distribution
         6. Select Best Distribution
         
         Args:
-            data: DataFrame, Series, or string (file path to Excel/CSV).
+            data: DataFrame or Series (preprocessed data).
             pationt_type: Column name to analyze.
             period: Periodicity (default 7).
             seasonal: Seasonal smoother (default 13).
@@ -199,28 +223,22 @@ class TimeSeriesAnalyzer:
         Returns:
             dict: The stats of the best fitting distribution.
         """
-        # 0. Handle File Path Input
-        if isinstance(data, str):
-            print(f"File path detected: {data}")
-            from .preprocessing import Preprocessing
-            pre = Preprocessing()
-            # Auto-load with defaults, drop_cancelled=True is safer for analysis
-            data = pre.preprocess_data(data, drop_cancelled=True)
-            print("Data loaded and preprocessed successfully.")
-
         # 1. Decompose
         result = self.decompose_stl(data, pationt_type, period, seasonal)
         
         # 2. Plot Decomposition
         self.plot_decomposition(result)
         
-        # 3. Analyze Residuals
+        # 3. Diagnostics (ACF + Ljung-Box)
+        self.check_residuals_autocorrelation(result.resid)
+        
+        # 4. Analyze Residuals
         fit_results = self.analyze_residuals(result.resid)
         
-        # 4. Plot Residuals Distribution
+        # 5. Plot Residuals Distribution
         self.plot_residuals_distribution(result.resid, fit_results)
         
-        # 5. Get Best Distribution
+        # 6. Get Best Distribution
         best_name, best_stats = self.get_best_distribution(fit_results)
         
         print(f"\n--- Analysis Complete ---")
