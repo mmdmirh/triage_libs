@@ -113,7 +113,10 @@ class TimeSeriesAnalyzer:
                 k = len(params)
                 aic = 2 * k - 2 * log_likelihood
                 
-                results[name] = {'D': D, 'p_value': p_value, 'AIC': aic, 'params': params, 'dist': dist}
+                # Store offset (default 0)
+                offset_val = offset if name == "Negative Binomial" else 0
+                
+                results[name] = {'D': D, 'p_value': p_value, 'AIC': aic, 'params': params, 'dist': dist, 'offset': offset_val}
                 print(f"{name}: D={D:.4f}, p-value={p_value:.4f}, AIC={aic:.4f}")
             except Exception as e:
                 print(f"{name}: Failed to fit - {str(e)}")
@@ -135,7 +138,16 @@ class TimeSeriesAnalyzer:
         for name, res in fit_results.items():
             dist = res['dist']
             params = res['params']
-            pdf = dist.pdf(x, *params)
+            offset = res.get('offset', 0)
+            
+            if name == "Negative Binomial":
+                # Use PMF for discrete, shifted by offset
+                # We round x+offset to nearest integers for PMF evaluation
+                # but plotting it as a smooth curve for visual comparison
+                pdf = dist.pmf(x + offset, *params)
+            else:
+                pdf = dist.pdf(x, *params)
+                
             plt.plot(x, pdf, label=f'{name} fit', linewidth=2)
             
         plt.legend()
