@@ -104,7 +104,12 @@ class TimeSeriesAnalyzer:
                 
                 # Calculate AIC
                 # AIC = 2k - 2ln(L)
-                log_likelihood = np.sum(dist.logpdf(curr_residuals, *params))
+                # Use logpmf for discrete (Negative Binomial), logpdf for continuous
+                if name == "Negative Binomial":
+                     log_likelihood = np.sum(dist.logpmf(curr_residuals, *params))
+                else:
+                     log_likelihood = np.sum(dist.logpdf(curr_residuals, *params))
+                     
                 k = len(params)
                 aic = 2 * k - 2 * log_likelihood
                 
