@@ -46,33 +46,6 @@ class TimeSeriesAnalyzer:
         plt.tight_layout()
         plt.show()
 
-    def plot_zoomed_seasonality(self, result, days=60):
-        """
-        Plots a zoomed-in view of the seasonal component to inspect the weekly cycle.
-        
-        Args:
-            result: The STL decomposition result.
-            days (int): Number of days to zoom in on (default 60).
-        """
-        import matplotlib.dates as mdates
-        
-        seasonal = result.seasonal[:days]
-        
-        plt.figure(figsize=(12, 5))
-        plt.plot(seasonal.index, seasonal, marker='o', linestyle='-')
-        plt.title(f"Seasonal Component (First {days} Days)")
-        plt.xlabel("Date")
-        plt.ylabel("Seasonality")
-        
-        # Format x-axis to show every day and include day name
-        plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=1))
-        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d\n%a'))
-        
-        plt.grid(True, which='both', linestyle='--', alpha=0.7)
-        plt.xticks(rotation=90)
-        plt.tight_layout()
-        plt.show()
-
     def analyze_residuals(self, residuals):
         """
         Fits various distributions to residuals and returns goodness-of-fit stats.
@@ -92,7 +65,8 @@ class TimeSeriesAnalyzer:
             params = dist.fit(residuals)
             
             # KS Test
-            D, p_value = stats.kstest(residuals, name, args=params)
+            # Pass the cdf method directly instead of the name string
+            D, p_value = stats.kstest(residuals, dist.cdf, args=params)
             results[name] = {'D': D, 'p_value': p_value, 'params': params, 'dist': dist}
             print(f"{name}: D={D:.4f}, p-value={p_value:.4f}")
             
