@@ -102,3 +102,29 @@ class TimeSeriesAnalyzer:
         plt.legend()
         plt.grid(True, alpha=0.3)
         plt.show()
+
+    def get_best_distribution(self, fit_results):
+        """
+        Selects the best distribution based on AIC and KS test p-value.
+        Priority:
+        1. Valid fit (p-value > 0.05) with lowest AIC.
+        2. If no valid fit, lowest AIC among all (with warning).
+        
+        Returns:
+            tuple: (best_name, best_stats_dict)
+        """
+        valid_fits = {k: v for k, v in fit_results.items() if v['p_value'] > 0.05}
+        
+        if valid_fits:
+            # Select lowest AIC among valid fits
+            best_name = min(valid_fits, key=lambda k: valid_fits[k]['AIC'])
+            print(f"\n--- Best Fit Selection ---")
+            print(f"Selected '{best_name}' (Lowest AIC among valid fits).")
+            return best_name, fit_results[best_name]
+        else:
+            # Fallback to lowest AIC among all
+            best_name = min(fit_results, key=lambda k: fit_results[k]['AIC'])
+            print(f"\n--- Best Fit Selection ---")
+            print(f"WARNING: No distribution passed the KS test (p > 0.05).")
+            print(f"Selected '{best_name}' based on lowest AIC only.")
+            return best_name, fit_results[best_name]
