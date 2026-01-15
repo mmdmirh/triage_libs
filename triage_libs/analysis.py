@@ -211,18 +211,30 @@ class TimeSeriesAnalyzer:
         """
         print("\n--- Checking Residuals Autocorrelation ---")
         
+        # Adjust lags for short time series
+        n_obs = len(residuals)
+        # Cap lags at n_obs // 2 to ensure statistical validity and prevent plotting errors
+        # If dataset is huge, default to 40. if small, use half size.
+        safe_lags = min(lags, int(n_obs / 2) - 1)
+        if safe_lags < 1:
+            safe_lags = 1 # Fallback for extremely short series
+            
+        print(f"Data length: {n_obs}. Using lags: {safe_lags}")
+        
         # 1. Plot ACF
         from statsmodels.graphics.tsaplots import plot_acf
         plt.figure(figsize=(10, 5))
-        plot_acf(residuals, lags=lags, alpha=0.05, title='Autocorrelation of Residuals')
+        plot_acf(residuals, lags=safe_lags, alpha=0.05, title='Autocorrelation of Residuals')
         plt.show()
         
         # 2. Ljung-Box Test
         from statsmodels.stats.diagnostic import acorr_ljungbox
-        lb_test = acorr_ljungbox(residuals, lags=[10], return_df=True)
+        # Use safe_lags for test too, or at least a small number like 10 but capped
+        lb_lags = [min(10, safe_lags)]
+        lb_test = acorr_ljungbox(residuals, lags=lb_lags, return_df=True)
         p_val = lb_test['lb_pvalue'].iloc[0]
         
-        print(f"Ljung-Box Test (lag=10): p-value = {p_val:.4f}")
+        print(f"Ljung-Box Test (lag={lb_lags[0]}): p-value = {p_val:.4f}")
         if p_val < 0.05:
              print("WARNING: p-value < 0.05. Residuals are NOT White Noise (Autocorrelation detected).")
              print("This suggests the decomposition model (Trend/Seasonality) might be incomplete.")
