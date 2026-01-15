@@ -40,9 +40,34 @@ class TimeSeriesAnalyzer:
     def plot_decomposition(self, result):
         """
         Plots the STL decomposition result (Trend, Seasonality, Residuals).
+        Manually handles plotting to ensure PeriodIndex compatibility.
         """
-        fig = result.plot()
-        plt.suptitle("STL Decomposition (Trend, Seasonality, Residuals)", fontsize=16)
+        # Prepare index for plotting (convert PeriodIndex to Timestamp if needed)
+        if isinstance(result.observed.index, pd.PeriodIndex):
+            plot_index = result.observed.index.to_timestamp()
+        else:
+            plot_index = result.observed.index
+            
+        fig, axes = plt.subplots(4, 1, sharex=True, figsize=(10, 10))
+        
+        # Plot Observed
+        axes[0].plot(plot_index, result.observed)
+        axes[0].set_ylabel('Observed')
+        axes[0].set_title('STL Decomposition')
+        
+        # Plot Trend
+        axes[1].plot(plot_index, result.trend)
+        axes[1].set_ylabel('Trend')
+        
+        # Plot Seasonal
+        axes[2].plot(plot_index, result.seasonal)
+        axes[2].set_ylabel('Seasonal')
+        
+        # Plot Residuals
+        axes[3].scatter(plot_index, result.resid, s=10) # Scatter for residuals is often clearer
+        axes[3].axhline(0, color='black', linestyle='--', linewidth=1)
+        axes[3].set_ylabel('Residual')
+        
         plt.tight_layout()
         plt.show()
 
