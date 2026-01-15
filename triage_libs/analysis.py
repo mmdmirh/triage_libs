@@ -69,8 +69,15 @@ class TimeSeriesAnalyzer:
             # KS Test
             # Pass the cdf method directly instead of the name string
             D, p_value = stats.kstest(residuals, dist.cdf, args=params)
-            results[name] = {'D': D, 'p_value': p_value, 'params': params, 'dist': dist}
-            print(f"{name}: D={D:.4f}, p-value={p_value:.4f}")
+            
+            # Calculate AIC
+            # AIC = 2k - 2ln(L)
+            log_likelihood = np.sum(dist.logpdf(residuals, *params))
+            k = len(params)
+            aic = 2 * k - 2 * log_likelihood
+            
+            results[name] = {'D': D, 'p_value': p_value, 'AIC': aic, 'params': params, 'dist': dist}
+            print(f"{name}: D={D:.4f}, p-value={p_value:.4f}, AIC={aic:.4f}")
             
         return results
 
