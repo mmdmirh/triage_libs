@@ -70,8 +70,27 @@ class TimeSeriesAnalyzer:
                     # Shift to make positive and round to nearest int
                     offset = abs(min(residuals)) if min(residuals) < 0 else 0
                     data_for_fit = np.round(residuals + offset).astype(int)
-                    params = dist.fit(data_for_fit)
                     
+                    # Manual Fit via Method of Moments (scipy nbinom.fit is unreliable/missing)
+                    # Mean = n(1-p)/p, Var = n(1-p)/p^2
+                    # p = Mean / Var
+                    # n = Mean * p / (1-p)
+                    
+                    mean_val = np.mean(data_for_fit)
+                    var_val = np.var(data_for_fit)
+                    
+                    if var_val > mean_val:
+                        p_est = mean_val / var_val
+                        n_est = (mean_val * p_est) / (1 - p_est)
+                        params = (n_est, p_est) # n, p
+                    else:
+                        # Fallback if under-dispersed (Mean > Var), treat as Poisson-ish (p near 1)
+                        # or just force a fit that works mathematically
+                        p_est = 0.99 
+                        n_est = mean_val
+                        params = (n_est, p_est)
+                        print("  (Warning: Data is under-dispersed, Negative Binomial may be poor fit)")
+
                     # For KS test / AIC, use the transformed data
                     curr_residuals = data_for_fit
                     print(f"  (Note: Negative Binomial fitted to shifted/rounded data, offset={offset:.2f})")
