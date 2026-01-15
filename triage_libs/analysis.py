@@ -57,27 +57,42 @@ class TimeSeriesAnalyzer:
             "Laplace": stats.laplace,
             "Student's t": stats.t,
             "Logistic": stats.logistic,
-            "Cauchy": stats.cauchy
+            "Cauchy": stats.cauchy,
+            "Negative Binomial": stats.nbinom
         }
         
         results = {}
         print("\nGoodness of Fit (KS Test):")
         for name, dist in distributions.items():
-            # Fit parameters
-            params = dist.fit(residuals)
-            
-            # KS Test
-            # Pass the cdf method directly instead of the name string
-            D, p_value = stats.kstest(residuals, dist.cdf, args=params)
-            
-            # Calculate AIC
-            # AIC = 2k - 2ln(L)
-            log_likelihood = np.sum(dist.logpdf(residuals, *params))
-            k = len(params)
-            aic = 2 * k - 2 * log_likelihood
-            
-            results[name] = {'D': D, 'p_value': p_value, 'AIC': aic, 'params': params, 'dist': dist}
-            print(f"{name}: D={D:.4f}, p-value={p_value:.4f}, AIC={aic:.4f}")
+            try:
+                # Special handling for Negative Binomial (requires non-negative integers)
+                if name == "Negative Binomial":
+                    # Shift to make positive and round to nearest int
+                    offset = abs(min(residuals)) if min(residuals) < 0 else 0
+                    data_for_fit = np.round(residuals + offset).astype(int)
+                    params = dist.fit(data_for_fit)
+                    
+                    # For KS test / AIC, use the transformed data
+                    curr_residuals = data_for_fit
+                    print(f"  (Note: Negative Binomial fitted to shifted/rounded data, offset={offset:.2f})")
+                else:
+                    curr_residuals = residuals
+                    params = dist.fit(curr_residuals)
+                
+                # KS Test
+                # Pass the cdf method directly instead of the name string
+                D, p_value = stats.kstest(curr_residuals, dist.cdf, args=params)
+                
+                # Calculate AIC
+                # AIC = 2k - 2ln(L)
+                log_likelihood = np.sum(dist.logpdf(curr_residuals, *params))
+                k = len(params)
+                aic = 2 * k - 2 * log_likelihood
+                
+                results[name] = {'D': D, 'p_value': p_value, 'AIC': aic, 'params': params, 'dist': dist}
+                print(f"{name}: D={D:.4f}, p-value={p_value:.4f}, AIC={aic:.4f}")
+            except Exception as e:
+                print(f"{name}: Failed to fit - {str(e)}")
             
         return results
 
