@@ -128,3 +128,40 @@ class TimeSeriesAnalyzer:
             print(f"WARNING: No distribution passed the KS test (p > 0.05).")
             print(f"Selected '{best_name}' based on lowest AIC only.")
             return best_name, fit_results[best_name]
+
+    def run_full_analysis(self, data, pationt_type, period=7, seasonal=13):
+        """
+        Runs the complete analysis pipeline sequentially:
+        1. Decompose STL
+        2. Plot Decomposition
+        3. Analyze Residuals (fit distributions)
+        4. Plot Residuals Distribution
+        5. Select Best Distribution
+        
+        Args:
+            data: DataFrame or Series.
+            pationt_type: Column name to analyze.
+            period: Periodicity (default 7).
+            seasonal: Seasonal smoother (default 13).
+            
+        Returns:
+            dict: The stats of the best fitting distribution.
+        """
+        # 1. Decompose
+        result = self.decompose_stl(data, pationt_type, period, seasonal)
+        
+        # 2. Plot Decomposition
+        self.plot_decomposition(result)
+        
+        # 3. Analyze Residuals
+        fit_results = self.analyze_residuals(result.resid)
+        
+        # 4. Plot Residuals Distribution
+        self.plot_residuals_distribution(result.resid, fit_results)
+        
+        # 5. Get Best Distribution
+        best_name, best_stats = self.get_best_distribution(fit_results)
+        
+        print(f"\n--- Analysis Complete ---")
+        print(f"Best fitting distribution: {best_name}")
+        return best_stats
