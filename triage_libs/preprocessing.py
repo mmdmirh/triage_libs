@@ -170,7 +170,7 @@ class Preprocessing:
                  
         return df[mask_keep]
 
-    def preprocess_data(self, data, date_column='Authorized On', frequency='daily', country='CA', prov='ON', drop_cancelled=False):
+    def preprocess_data(self, data, date_column='Created', frequency='daily', country='CA', prov='ON', drop_cancelled=False):
         """
         Runs the complete preprocessing pipeline:
         1. Load data (if file path provided).
@@ -181,7 +181,7 @@ class Preprocessing:
         
         Args:
             data (pd.DataFrame or str): Raw input dataframe or file path.
-            date_column (str): Column to use for dates (default 'Authorized On').
+            date_column (str): Column to use for dates (default 'Created').
             frequency (str): Frequency for counting (default 'daily').
             country (str): Country code for holidays (default 'CA').
             prov (str): Province/State code for holidays (default 'ON').
