@@ -236,3 +236,53 @@ class WaitTimeAnalyzer:
         plt.grid(axis='y', alpha=0.3)
         plt.tight_layout()
         plt.show()
+
+    def generate_yearly_breach_report(self, df, date_col='Created', priority_col='Priority Type (RFL)'):
+        """
+        Generates a summary report grouped by Year and Priority Type.
+        
+        Args:
+            df (pd.DataFrame): Processed dataframe.
+            date_col (str): Column containing the date to extract year from (default 'Created').
+            priority_col (str): Priority column.
+            
+        Returns:
+            pd.DataFrame: Summary table grouped by Year and Priority.
+        """
+        df = df.copy()
+        
+        # Ensure date column is datetime
+        df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
+        
+        # Extract Year
+        df['Year'] = df[date_col].dt.year
+        
+        # Drop rows with no year (if any)
+        df = df.dropna(subset=['Year'])
+        df['Year'] = df['Year'].astype(int)
+        
+        # Group by Year AND Priority
+        agg_funcs = {
+            'Is_Breach': ['count', 'sum']
+        }
+        
+        summary = df.groupby(['Year', priority_col]).agg(agg_funcs)
+        
+        # Flatten columns
+        summary.columns = ['Total', 'Breach_Count']
+        
+        # Calculate On Time
+        summary['On_Time_Count'] = summary['Total'] - summary['Breach_Count']
+        
+        # Calculate Percentages (Relative to that Year+Type group)
+        summary['Breach_%'] = (summary['Breach_Count'] / summary['Total']) * 100
+        summary['OnTime_%'] = (summary['On_Time_Count'] / summary['Total']) * 100
+        
+        # Round
+        summary['Breach_%'] = summary['Breach_%'].round(1)
+        summary['OnTime_%'] = summary['OnTime_%'].round(1)
+        
+        # Reorder
+        summary = summary[['Breach_Count', 'On_Time_Count', 'Total', 'Breach_%', 'OnTime_%']]
+        
+        return summary
