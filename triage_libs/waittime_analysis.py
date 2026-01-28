@@ -202,18 +202,24 @@ class WaitTimeAnalyzer:
         
         # Filter Data
         if priority_type.lower() != 'all':
-            # Case-insensitive partial matching or exact matching?
-            # Let's assume exact match for now as per the summary table
+            # mask
             mask = df['Priority Type (RFL)'] == priority_type
-            plot_data = df[mask]
+            plot_data = df[mask].copy() # Explicit copy
             title_suffix = f"for '{priority_type}'"
         else:
-            plot_data = df
+            plot_data = df.copy() # Explicit copy
             title_suffix = "for All Priority Types"
             
         if len(plot_data) == 0:
             print(f"No data found for Priority Type: {priority_type}")
             return
+            
+        # Ensure Breach_Margin is numeric just in case
+        plot_data['Breach_Margin'] = pd.to_numeric(plot_data['Breach_Margin'], errors='coerce')
+        plot_data = plot_data.dropna(subset=['Breach_Margin'])
+        
+        # Reset index to avoid any alignment issues with seaborn
+        plot_data = plot_data.reset_index(drop=True)
             
         # Plot
         # We plot 'Breach_Margin'
