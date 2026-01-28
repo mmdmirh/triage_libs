@@ -124,8 +124,30 @@ class WaitTimeAnalyzer:
         # Calculate "Unbreached" (Within Target)
         summary['On_Time_Count'] = summary['Total'] - summary['Breach_Count']
         
+        # Calculate Grand Total for Global Percentages
+        grand_total = summary['Total'].sum()
+        
+        # 1. Type-based Percentages (Relative to that specific Priority Type)
+        summary['Breach_%_Type'] = (summary['Breach_Count'] / summary['Total']) * 100
+        summary['OnTime_%_Type'] = (summary['On_Time_Count'] / summary['Total']) * 100
+        
+        # 2. Global Percentages (Relative to Grand Total of all patients in file)
+        summary['Breach_%_Global'] = (summary['Breach_Count'] / grand_total) * 100
+        summary['OnTime_%_Global'] = (summary['On_Time_Count'] / grand_total) * 100
+        
+        # Round all component columns
+        summary['Breach_%_Type'] = summary['Breach_%_Type'].round(1)
+        summary['OnTime_%_Type'] = summary['OnTime_%_Type'].round(1)
+        summary['Breach_%_Global'] = summary['Breach_%_Global'].round(1)
+        summary['OnTime_%_Global'] = summary['OnTime_%_Global'].round(1)
+        
         # Select and reorder desired columns
-        summary = summary[['Breach_Count', 'On_Time_Count']]
+        cols = [
+            'Breach_Count', 'On_Time_Count', 'Total',
+            'Breach_%_Type', 'OnTime_%_Type',
+            'Breach_%_Global', 'OnTime_%_Global'
+        ]
+        summary = summary[cols]
         
         # Sort by most breaches
         summary = summary.sort_values('Breach_Count', ascending=False)
