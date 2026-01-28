@@ -94,35 +94,48 @@ class WaitTimeAnalyzer:
         
         return df
 
-    def generate_summary_report(self, df):
+    def generate_summary_report(self, df, group_by_col='Priority Type (RFL)'):
         """
-        Aggregates data to report total referrals, breaches, and breach %.
-        No grouping - output is for the entire dataframe (e.g. single clinic file).
+        Aggregates data to report breaches and on-time counts per Patient Type.
         
         Args:
             df (pd.DataFrame): Processed dataframe with breach info.
+            group_by_col (str): Column to group by (default 'Priority Type (RFL)').
             
         Returns:
-            pd.DataFrame: Summary table (single row).
+            pd.DataFrame: Summary table with Breach_Count and On_Time_Count.
         """
-        total_referrals = len(df)
-        breach_count = df['Is_Breach'].sum()
+        if group_by_col not in df.columns:
+            # Fallback if column missing (shouldn't happen for Priority Type)
+            return pd.DataFrame()
+
+        # Group by Patient Type
+        # Is_Breach is boolean: sum() = count of True (Breaches)
+        # count() = Total
+        agg_funcs = {
+            'Is_Breach': ['count', 'sum']
+        }
         
-        breach_percentage = (breach_count / total_referrals) * 100 if total_referrals > 0 else 0
-        breach_percentage = round(breach_percentage, 1)
+        summary = df.groupby(group_by_col).agg(agg_funcs)
         
-        summary = pd.DataFrame([{
-            'Total_Referrals': total_referrals,
-            'Breach_Count': breach_count,
-            'Breach_Percentage': breach_percentage
-        }])
+        # Flatten columns
+        summary.columns = ['Total', 'Breach_Count']
+        
+        # Calculate "Unbreached" (Within Target)
+        summary['On_Time_Count'] = summary['Total'] - summary['Breach_Count']
+        
+        # Select and reorder desired columns
+        summary = summary[['Breach_Count', 'On_Time_Count']]
+        
+        # Sort by most breaches
+        summary = summary.sort_values('Breach_Count', ascending=False)
         
         return summary
 
     def run_analysis_pipeline(self, df, priority_col='Priority Type (RFL)', actual_wait_col='Auth to Appt'):
         """
         Orchestrates the full analysis pipeline.
-        Refactored to analyze single file without grouping.
+        Refactored to analyze single file without grouping by clinic.
         """
         print("--- Starting Wait Time Analysis ---")
         
@@ -139,7 +152,7 @@ class WaitTimeAnalyzer:
         
         # 3. Generate Summary
         print("Generating summary report...")
-        summary = self.generate_summary_report(df_processed)
+        summary = self.generate_summary_report(df_processed, group_by_col=priority_col)
         
         print("\n--- Summary Report ---")
         print(summary)
