@@ -202,10 +202,11 @@ class WaitTimeAnalyzer:
         
         # Filter Data
         if priority_type.lower() != 'all':
-            # mask
-            mask = df['Priority Type (RFL)'] == priority_type
+            # mask: Case-insensitive partial match
+            # e.g. "urgent" will match "Urgent", "Urgent 05", etc.
+            mask = df['Priority Type (RFL)'].astype(str).str.lower().str.contains(priority_type.lower(), na=False)
             plot_data = df[mask].copy() # Explicit copy
-            title_suffix = f"for '{priority_type}'"
+            title_suffix = f"for types containing '{priority_type}'"
         else:
             plot_data = df.copy() # Explicit copy
             title_suffix = "for All Priority Types"
