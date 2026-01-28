@@ -1,8 +1,7 @@
 import pandas as pd
 import numpy as np
 import re
-import matplotlib.pyplot as plt
-import seaborn as sns
+
 
 class WaitTimeAnalyzer:
     """
@@ -95,67 +94,41 @@ class WaitTimeAnalyzer:
         
         return df
 
-    def generate_summary_report(self, df, group_by_col='Clinic'):
+    def generate_summary_report(self, df):
         """
         Aggregates data to report total referrals, breaches, and breach %.
+        No grouping - output is for the entire dataframe (e.g. single clinic file).
         
         Args:
             df (pd.DataFrame): Processed dataframe with breach info.
-            group_by_col (str): Column to group by (e.g. 'Clinic' or 'Referral Source').
             
         Returns:
-            pd.DataFrame: Summary table.
+            pd.DataFrame: Summary table (single row).
         """
-        if group_by_col not in df.columns:
-             # Check if it was a missing column or just typo. 
-             # If it doesn't exist, maybe we can fallback or warn.
-             # raising error for now as it's critical.
-             raise ValueError(f"Grouping column '{group_by_col}' not found in DataFrame.")
-
-        # Aggregation dictionary
-        agg_funcs = {
-            'Is_Breach': ['count', 'sum'] # count=Total, sum=True(Breaches)
-        }
+        total_referrals = len(df)
+        breach_count = df['Is_Breach'].sum()
         
-        summary = df.groupby(group_by_col).agg(agg_funcs)
+        breach_percentage = (breach_count / total_referrals) * 100 if total_referrals > 0 else 0
+        breach_percentage = round(breach_percentage, 1)
         
-        # Flatten MultiIndex columns
-        summary.columns = ['Total_Referrals', 'Breach_Count']
-        
-        # Calculate Percentage
-        summary['Breach_Percentage'] = (summary['Breach_Count'] / summary['Total_Referrals']) * 100
-        summary['Breach_Percentage'] = summary['Breach_Percentage'].round(1)
-        
-        # Sort by breach count desc
-        summary = summary.sort_values('Breach_Count', ascending=False)
+        summary = pd.DataFrame([{
+            'Total_Referrals': total_referrals,
+            'Breach_Count': breach_count,
+            'Breach_Percentage': breach_percentage
+        }])
         
         return summary
 
-    def plot_breach_rate(self, summary_df, title="Breach Rate by Clinic"):
-        """
-        Plots a bar chart of Breach Percentage.
-        """
-        plt.figure(figsize=(12, 6))
-        
-        # Reset index for plotting if it's the index
-        plot_data = summary_df.reset_index()
-        x_col = plot_data.columns[0] # Clinic Name
-        
-        sns.barplot(data=plot_data, x=x_col, y='Breach_Percentage', palette='viridis')
-        
-        plt.title(title)
-        plt.ylabel('% of Patients Not Seen on Target')
-        plt.xlabel(x_col)
-        plt.xticks(rotation=45, ha='right')
-        plt.tight_layout()
-        plt.show()
-
-    def run_analysis_pipeline(self, df, priority_col='Priority Type (RFL)', actual_wait_col='Auth to Appt', group_by_col='Clinic'):
+    def run_analysis_pipeline(self, df, priority_col='Priority Type (RFL)', actual_wait_col='Auth to Appt'):
         """
         Orchestrates the full analysis pipeline.
+        Refactored to analyze single file without grouping.
         """
         print("--- Starting Wait Time Analysis ---")
         
+        # Work on a copy
+        df = df.copy()
+
         # 1. Parse Targets
         print(f"Parsing targets from '{priority_col}'...")
         df_processed = self.parse_target_days(df, priority_col=priority_col)
@@ -165,13 +138,10 @@ class WaitTimeAnalyzer:
         df_processed = self.identify_breaches(df_processed, actual_wait_col=actual_wait_col)
         
         # 3. Generate Summary
-        print(f"Aggregating stats by '{group_by_col}'...")
-        summary = self.generate_summary_report(df_processed, group_by_col=group_by_col)
+        print("Generating summary report...")
+        summary = self.generate_summary_report(df_processed)
         
         print("\n--- Summary Report ---")
         print(summary)
-        
-        # 4. Plot
-        self.plot_breach_rate(summary, title=f"Breach Rate by {group_by_col}")
         
         return df_processed, summary
