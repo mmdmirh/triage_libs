@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import re
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 class WaitTimeAnalyzer:
@@ -185,3 +187,45 @@ class WaitTimeAnalyzer:
         print(summary)
         
         return df_processed, summary
+
+    def plot_breach_margin_histogram(self, df, priority_type='all', bins=20):
+        """
+        Plots a histogram of Breach Margins (+ve is late, -ve is early).
+        
+        Args:
+            df (pd.DataFrame): Processed dataframe.
+            priority_type (str): Specific 'Priority Type (RFL)' to filter by. 
+                                 Default 'all' plots for everyone.
+            bins (int): Number of histogram bins.
+        """
+        plt.figure(figsize=(10, 6))
+        
+        # Filter Data
+        if priority_type.lower() != 'all':
+            # Case-insensitive partial matching or exact matching?
+            # Let's assume exact match for now as per the summary table
+            mask = df['Priority Type (RFL)'] == priority_type
+            plot_data = df[mask]
+            title_suffix = f"for '{priority_type}'"
+        else:
+            plot_data = df
+            title_suffix = "for All Priority Types"
+            
+        if len(plot_data) == 0:
+            print(f"No data found for Priority Type: {priority_type}")
+            return
+            
+        # Plot
+        # We plot 'Breach_Margin'
+        sns.histplot(data=plot_data, x='Breach_Margin', bins=bins, kde=True, color='skyblue', edgecolor='black')
+        
+        # Add a vertical line at 0 (Target)
+        plt.axvline(0, color='red', linestyle='--', linewidth=2, label='Target Date (0)')
+        
+        plt.title(f"Distribution of Breach Margins {title_suffix}")
+        plt.xlabel("Days Over/Under Target\n(Positive = Late/Breach, Negative = Early/On-Time)")
+        plt.ylabel("Number of Patients")
+        plt.legend()
+        plt.grid(axis='y', alpha=0.3)
+        plt.tight_layout()
+        plt.show()
