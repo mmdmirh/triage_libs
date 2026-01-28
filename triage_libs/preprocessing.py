@@ -29,7 +29,7 @@ class Preprocessing:
             df[column_name] = df[column_name].apply(standardize)
         return df
 
-    def count_arrivals(self, df, date_column='Authorized On', frequency='daily'):
+    def count_arrivals(self, df, date_column='Created', frequency='daily'):
         """
         Counts arrivals per date, week, month, or year for each patient type.
         
