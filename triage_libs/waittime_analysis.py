@@ -83,11 +83,16 @@ class WaitTimeAnalyzer:
         df[actual_wait_col] = pd.to_numeric(df[actual_wait_col], errors='coerce')
         df[target_col] = pd.to_numeric(df[target_col], errors='coerce')
         
-        # Identify Breach: Actual > Target
-        mask_valid = df[actual_wait_col].notna() & df[target_col].notna()
+        # Drop rows where either value is NaN (invalid/missing)
+        original_len = len(df)
+        df = df.dropna(subset=[actual_wait_col, target_col])
+        dropped_len = original_len - len(df)
         
-        df['Is_Breach'] = False
-        df.loc[mask_valid, 'Is_Breach'] = df.loc[mask_valid, actual_wait_col] > df.loc[mask_valid, target_col]
+        if dropped_len > 0:
+            print(f"Dropped {dropped_len} rows due to missing/invalid wait time or target.")
+        
+        # Identify Breach: Actual > Target
+        df['Is_Breach'] = df[actual_wait_col] > df[target_col]
         
         # Breach Margin: Positive means late, Negative means early
         df['Breach_Margin'] = df[actual_wait_col] - df[target_col]
