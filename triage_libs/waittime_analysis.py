@@ -237,7 +237,7 @@ class WaitTimeAnalyzer:
         plt.tight_layout()
         plt.show()
 
-    def generate_yearly_breach_report(self, df, date_col='Created', priority_col='Priority Type (RFL)'):
+    def generate_yearly_breach_report(self, df, date_col='Authorized On', priority_col='Priority Type (RFL)'):
         """
         Generates a summary report grouped by Year and Priority Type.
         
@@ -285,4 +285,4 @@ class WaitTimeAnalyzer:
         # Reorder
         summary = summary[['Breach_Count', 'On_Time_Count', 'Total', 'Breach_%', 'OnTime_%']]
         
-        return summary
+        return summary.reset_index()
