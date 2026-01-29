@@ -343,7 +343,7 @@ class WaitTimeAnalyzer:
 
     def save_to_excel(self, df, filepath, sheet_name='Sheet1', index=False):
         """
-        Saves a DataFrame to an Excel file.
+        Saves a DataFrame to an Excel file. Appends to existing file if it exists.
         
         Args:
             df (pd.DataFrame): Dataframe to save.
@@ -352,7 +352,50 @@ class WaitTimeAnalyzer:
             index (bool): Whether to include the index (default False).
         """
         try:
-            df.to_excel(filepath, sheet_name=sheet_name, index=index)
-            print(f"Successfully saved to {filepath}")
+            if os.path.exists(filepath):
+                with pd.ExcelWriter(filepath, mode='a', engine='openpyxl', if_sheet_exists='replace') as writer:
+                    df.to_excel(writer, sheet_name=sheet_name, index=index)
+            else:
+                with pd.ExcelWriter(filepath, mode='w', engine='openpyxl') as writer:
+                    df.to_excel(writer, sheet_name=sheet_name, index=index)
+            
+            print(f"Successfully saved '{sheet_name}' to {filepath}")
         except Exception as e:
             print(f"Error saving to Excel: {e}")
+
+    def insert_image_to_excel(self, filepath, sheet_name, image_path, cell_loc):
+        """
+        Inserts an image into an existing Excel file.
+        
+        Args:
+            filepath (str): Path to existing Excel file.
+            sheet_name (str): Name of the sheet to insert image into.
+            image_path (str): Path to image file.
+            cell_loc (str): Cell location (e.g., 'G2').
+        """
+        try:
+            from openpyxl import load_workbook
+            from openpyxl.drawing.image import Image
+            
+            # Load workbook
+            wb = load_workbook(filepath)
+            
+            # Select sheet
+            if sheet_name not in wb.sheetnames:
+                print(f"Sheet '{sheet_name}' not found in {filepath}. Cannot insert image.")
+                return
+            
+            ws = wb[sheet_name]
+            
+            # Load image
+            img = Image(image_path)
+            
+            # Add image
+            ws.add_image(img, cell_loc)
+            
+            # Save
+            wb.save(filepath)
+            print(f"Inserted image '{image_path}' into {filepath} at {cell_loc}")
+            
+        except Exception as e:
+            print(f"Error inserting image to Excel: {e}")
