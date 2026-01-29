@@ -324,3 +324,19 @@ class WaitTimeAnalyzer:
         plt.grid(axis='y', alpha=0.3)
         plt.tight_layout()
         plt.show()
+
+    def save_to_excel(self, df, filepath, sheet_name='Sheet1', index=False):
+        """
+        Saves a DataFrame to an Excel file.
+        
+        Args:
+            df (pd.DataFrame): Dataframe to save.
+            filepath (str): Target file path (should end in .xlsx).
+            sheet_name (str): Name of the Excel sheet (default 'Sheet1').
+            index (bool): Whether to include the index (default False).
+        """
+        try:
+            df.to_excel(filepath, sheet_name=sheet_name, index=index)
+            print(f"Successfully saved to {filepath}")
+        except Exception as e:
+            print(f"Error saving to Excel: {e}")
