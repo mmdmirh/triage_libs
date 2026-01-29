@@ -46,16 +46,27 @@ def main():
             yearly_breach_report = waititme_analyzer.generate_yearly_breach_report(df_processed, start_month=9)
             
             # Setup Paths
-            plot_path_yearly = os.path.join(output_plots_dir, f"{filename}_yearly_trend.png")
+            plot_path_yearly_count = os.path.join(output_plots_dir, f"{filename}_yearly_count.png")
+            plot_path_yearly_pct = os.path.join(output_plots_dir, f"{filename}_yearly_pct.png")
             plot_path_hist = os.path.join(output_plots_dir, f"{filename}_breach_hist.png")
             report_excel_path = os.path.join(output_reports_dir, f"{filename}.xlsx")
             
-            # 4. Plot Yearly Trend & Save
+            # 4. Plot Yearly Trends & Save
+            # Plot 1: Breach Count
             waititme_analyzer.plot_yearly_breach_trend(
                 yearly_breach_report,
                 y_col="Breach_Count",
                 clinic_name=filename,
-                save_path=plot_path_yearly,
+                save_path=plot_path_yearly_count,
+                show_plot=False
+            )
+            
+            # Plot 2: Breach %
+            waititme_analyzer.plot_yearly_breach_trend(
+                yearly_breach_report,
+                y_col="Breach_%",
+                clinic_name=filename,
+                save_path=plot_path_yearly_pct,
                 show_plot=False
             )
             
@@ -73,8 +84,11 @@ def main():
             waititme_analyzer.plot_breach_margin_histogram(df_processed, save_path=plot_path_hist, show_plot=False)
             
             # 7. Insert Images into Excel
-            # Insert Yearly Plot into 'yearly_breach_report' sheet
-            waititme_analyzer.insert_image_to_excel(report_excel_path, "yearly_breach_report", plot_path_yearly, "G2")
+            # Insert Yearly Count Plot into 'yearly_breach_report' sheet at G2
+            waititme_analyzer.insert_image_to_excel(report_excel_path, "yearly_breach_report", plot_path_yearly_count, "G2")
+            
+            # Insert Yearly % Plot into 'yearly_breach_report' sheet at G22 (below first plot)
+            waititme_analyzer.insert_image_to_excel(report_excel_path, "yearly_breach_report", plot_path_yearly_pct, "G22")
             
             # Insert Histogram into 'summary' sheet (or processed data)
             waititme_analyzer.insert_image_to_excel(report_excel_path, "summary", plot_path_hist, "G2")

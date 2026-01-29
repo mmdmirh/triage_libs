@@ -15,7 +15,7 @@ class WaitTimeAnalyzer:
     def __init__(self):
         pass
 
-    def parse_target_days(self, df, priority_col='Priority Type (RFL)', urgent_default=14, semi_default=30):
+    def parse_target_days(self, df, priority_col='Priority Type (RFL)', urgent_default=14, semi_default=90):
         """
         Parses the 'Priority Type (RFL)' column to extract target Days (Calendar Days).
         
@@ -24,7 +24,7 @@ class WaitTimeAnalyzer:
         - "Urgent ... X weeks" -> X * 7 (Days)
         - "Urgent ... X months" -> X * 30 (Days)
         - "Urgent" (plain) -> urgent_default (default 14 days ~ 2 weeks)
-        - "Semi-urgent" (plain) -> semi_default (default 30 days ~ 1 month)
+        - "Semi-urgent" (plain) -> semi_default (default 90 days ~ 3 months)
         
         Args:
             df (pd.DataFrame): Input dataframe.
