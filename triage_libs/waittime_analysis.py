@@ -237,14 +237,18 @@ class WaitTimeAnalyzer:
         plt.tight_layout()
         plt.show()
 
-    def generate_yearly_breach_report(self, df, date_col='Authorized On', priority_col='Priority Type (RFL)'):
+    def generate_yearly_breach_report(self, df, date_col='Created', priority_col='Priority Type (RFL)', start_month=1):
         """
         Generates a summary report grouped by Year and Priority Type.
+        Supports custom start month for Fiscal/Academic Years.
         
         Args:
             df (pd.DataFrame): Processed dataframe.
             date_col (str): Column containing the date to extract year from (default 'Created').
             priority_col (str): Priority column.
+            start_month (int): Month number (1-12) to start the year. 
+                               Default 1 (Calendar Year).
+                               If > 1, returns range formatted years (e.g. "2023-2024").
             
         Returns:
             pd.DataFrame: Summary table grouped by Year and Priority.
@@ -254,12 +258,24 @@ class WaitTimeAnalyzer:
         # Ensure date column is datetime
         df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
         
-        # Extract Year
-        df['Year'] = df[date_col].dt.year
+        # Drop rows with no date
+        df = df.dropna(subset=[date_col])
         
-        # Drop rows with no year (if any)
-        df = df.dropna(subset=['Year'])
-        df['Year'] = df['Year'].astype(int)
+        # Calculate Year
+        if start_month == 1:
+            # Standard Calendar Year
+            df['Year'] = df[date_col].dt.year.astype(str)
+        else:
+            # Custom Fiscal/Academic Year
+            # If month < start_month, it belongs to the *previous* year's cycle start
+            # Example: start_month=9 (Sep). Date=Aug 2023. Month(8) < 9. Effective Year = 2022. Label "2022-2023"
+            #                                Date=Sep 2023. Month(9) >= 9. Effective Year = 2023. Label "2023-2024"
+            
+            def get_fiscal_year(d):
+                eff_year = d.year if d.month >= start_month else d.year - 1
+                return f"{eff_year}-{eff_year + 1}"
+                
+            df['Year'] = df[date_col].apply(get_fiscal_year)
         
         # Group by Year AND Priority
         agg_funcs = {
