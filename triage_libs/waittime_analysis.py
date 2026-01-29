@@ -282,7 +282,7 @@ class WaitTimeAnalyzer:
         
         return summary.reset_index()
 
-    def plot_yearly_breach_trend(self, summary_df, priority_col='Priority Type (RFL)', y_col='Breach_%'):
+    def plot_yearly_breach_trend(self, summary_df, priority_col='Priority Type (RFL)', y_col='Breach_%', clinic_name=None):
         """
         Plots the trend of a metric over years for each priority type using a Grouped Bar Chart.
         
@@ -290,6 +290,8 @@ class WaitTimeAnalyzer:
             summary_df (pd.DataFrame): Output from generate_yearly_breach_report.
             priority_col (str): Column name for priority type (used for color/hue).
             y_col (str): Column to plot on Y-axis (e.g. 'Breach_%', 'Total', 'Breach_Count').
+            clinic_name (str): Optional. Filename or clinic name to display in title. 
+                               If a path is provided, it handles cleaning the name.
         """
         plt.figure(figsize=(12, 6))
         
@@ -307,7 +309,12 @@ class WaitTimeAnalyzer:
         # Plot: Grouped Bar Chart
         sns.barplot(data=plot_data, x='Year', y=y_col, hue=priority_col, palette='viridis', edgecolor='black')
         
-        plt.title(f"Yearly {y_col} by Priority Type")
+        # Construct Title
+        title_text = f"Yearly {y_col} by Priority Type"
+        if clinic_name:
+            title_text += f" - {clinic_name}"
+            
+        plt.title(title_text)
         plt.xlabel("Year")
         plt.ylabel(y_col)
         
