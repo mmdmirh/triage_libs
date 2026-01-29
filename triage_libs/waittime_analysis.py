@@ -14,22 +14,22 @@ class WaitTimeAnalyzer:
     def __init__(self):
         pass
 
-    def parse_target_days(self, df, priority_col='Priority Type (RFL)', urgent_default=10, semi_default=22):
+    def parse_target_days(self, df, priority_col='Priority Type (RFL)', urgent_default=14, semi_default=30):
         """
-        Parses the 'Priority Type (RFL)' column to extract target Business Days.
+        Parses the 'Priority Type (RFL)' column to extract target Days (Calendar Days).
         
         Logic:
         - "Urgent ... X days" -> X
-        - "Urgent ... X weeks" -> X * 5 (Business Days)
-        - "Urgent ... X months" -> X * 22 (Business Days)
-        - "Urgent" (plain) -> urgent_default (default 10 business days ~ 2 weeks)
-        - "Semi-urgent" (plain) -> semi_default (default 22 business days ~ 1 month)
+        - "Urgent ... X weeks" -> X * 7 (Days)
+        - "Urgent ... X months" -> X * 30 (Days)
+        - "Urgent" (plain) -> urgent_default (default 14 days ~ 2 weeks)
+        - "Semi-urgent" (plain) -> semi_default (default 30 days ~ 1 month)
         
         Args:
             df (pd.DataFrame): Input dataframe.
             priority_col (str): Column containing priority strings.
-            urgent_default (int): Default business days for plain "Urgent" (default 10).
-            semi_default (int): Default business days for plain "Semi-urgent" (default 22).
+            urgent_default (int): Default days for plain "Urgent" (default 14).
+            semi_default (int): Default days for plain "Semi-urgent" (default 30).
             
         Returns:
             pd.DataFrame: DataFrame with new 'Target_Days' column.
@@ -52,9 +52,9 @@ class WaitTimeAnalyzer:
                 if 'day' in unit:
                     return number
                 elif 'week' in unit:
-                    return number * 5 # Business Days
+                    return number * 7 # Calendar Days
                 elif 'month' in unit:
-                    return number * 22 # Business Days
+                    return number * 30 # Calendar Days (approx)
             
             # 2. Defaults for plain types
             if 'semi' in s_val:
@@ -128,31 +128,15 @@ class WaitTimeAnalyzer:
         # Flatten columns
         summary.columns = ['Total', 'Breach_Count']
         
-        # Calculate "Unbreached" (Within Target)
-        summary['On_Time_Count'] = summary['Total'] - summary['Breach_Count']
-        
-        # Calculate Grand Total for Global Percentages
-        grand_total = summary['Total'].sum()
-        
         # 1. Type-based Percentages (Relative to that specific Priority Type)
         summary['Breach_%_Type'] = (summary['Breach_Count'] / summary['Total']) * 100
-        summary['OnTime_%_Type'] = (summary['On_Time_Count'] / summary['Total']) * 100
         
-        # 2. Global Percentages (Relative to Grand Total of all patients in file)
-        summary['Breach_%_Global'] = (summary['Breach_Count'] / grand_total) * 100
-        summary['OnTime_%_Global'] = (summary['On_Time_Count'] / grand_total) * 100
-        
-        # Round all component columns
+        # Round 
         summary['Breach_%_Type'] = summary['Breach_%_Type'].round(1)
-        summary['OnTime_%_Type'] = summary['OnTime_%_Type'].round(1)
-        summary['Breach_%_Global'] = summary['Breach_%_Global'].round(1)
-        summary['OnTime_%_Global'] = summary['OnTime_%_Global'].round(1)
         
         # Select and reorder desired columns
         cols = [
-            'Breach_Count', 'On_Time_Count', 'Total',
-            'Breach_%_Type', 'OnTime_%_Type',
-            'Breach_%_Global', 'OnTime_%_Global'
+            'Breach_Count', 'Total', 'Breach_%_Type'
         ]
         summary = summary[cols]
         
