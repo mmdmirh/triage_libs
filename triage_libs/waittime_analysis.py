@@ -287,18 +287,13 @@ class WaitTimeAnalyzer:
         # Flatten columns
         summary.columns = ['Total', 'Breach_Count']
         
-        # Calculate On Time
-        summary['On_Time_Count'] = summary['Total'] - summary['Breach_Count']
-        
         # Calculate Percentages (Relative to that Year+Type group)
         summary['Breach_%'] = (summary['Breach_Count'] / summary['Total']) * 100
-        summary['OnTime_%'] = (summary['On_Time_Count'] / summary['Total']) * 100
         
         # Round
         summary['Breach_%'] = summary['Breach_%'].round(1)
-        summary['OnTime_%'] = summary['OnTime_%'].round(1)
         
         # Reorder
-        summary = summary[['Breach_Count', 'On_Time_Count', 'Total', 'Breach_%', 'OnTime_%']]
+        summary = summary[['Breach_Count', 'Total', 'Breach_%']]
         
         return summary.reset_index()
