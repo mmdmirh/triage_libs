@@ -173,7 +173,7 @@ class WaitTimeAnalyzer:
         
         return df_processed, summary
 
-    def plot_breach_margin_histogram(self, df, priority_type='all', bins=20, save_path=None):
+    def plot_breach_margin_histogram(self, df, priority_type='all', bins=20, save_path=None, show_plot=True):
         """
         Plots a histogram of Breach Margins (+ve is late, -ve is early).
         
@@ -183,6 +183,7 @@ class WaitTimeAnalyzer:
                                  Default 'all' plots for everyone.
             bins (int): Number of histogram bins.
             save_path (str): Optional path to save the plot image.
+            show_plot (bool): Whether to display the plot (default True).
         """
         plt.figure(figsize=(10, 6))
         
@@ -228,7 +229,10 @@ class WaitTimeAnalyzer:
             plt.savefig(save_path)
             print(f"Plot saved to {save_path}")
             
-        plt.show()
+        if show_plot:
+            plt.show()
+        else:
+            plt.close()
 
     def generate_yearly_breach_report(self, df, date_col='Created', priority_col='Priority Type (RFL)', start_month=1):
         """
@@ -291,7 +295,7 @@ class WaitTimeAnalyzer:
         
         return summary.reset_index()
 
-    def plot_yearly_breach_trend(self, summary_df, priority_col='Priority Type (RFL)', y_col='Breach_%', clinic_name=None, save_path=None):
+    def plot_yearly_breach_trend(self, summary_df, priority_col='Priority Type (RFL)', y_col='Breach_%', clinic_name=None, save_path=None, show_plot=True):
         """
         Plots the trend of a metric over years for each priority type using a Grouped Bar Chart.
         
@@ -302,6 +306,7 @@ class WaitTimeAnalyzer:
             clinic_name (str): Optional. Filename or clinic name to display in title. 
                                If a path is provided, it handles cleaning the name.
             save_path (str): Optional path to save the plot image.
+            show_plot (bool): Whether to display the plot (default True).
         """
         plt.figure(figsize=(12, 6))
         
@@ -340,7 +345,10 @@ class WaitTimeAnalyzer:
             plt.savefig(save_path)
             print(f"Plot saved to {save_path}")
             
-        plt.show()
+        if show_plot:
+            plt.show()
+        else:
+            plt.close()
 
     def save_to_excel(self, df, filepath, sheet_name='Sheet1', index=False):
         """

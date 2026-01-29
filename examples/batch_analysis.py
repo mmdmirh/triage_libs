@@ -55,7 +55,8 @@ def main():
                 yearly_breach_report,
                 y_col="Breach_Count",
                 clinic_name=filename,
-                save_path=plot_path_yearly
+                save_path=plot_path_yearly,
+                show_plot=False
             )
             
             # 5. Save to Excel (Multiple Sheets)
@@ -69,7 +70,7 @@ def main():
             waititme_analyzer.save_to_excel(summary, report_excel_path, sheet_name="summary")
             
             # 6. Plot Histogram & Save
-            waititme_analyzer.plot_breach_margin_histogram(df_processed, save_path=plot_path_hist)
+            waititme_analyzer.plot_breach_margin_histogram(df_processed, save_path=plot_path_hist, show_plot=False)
             
             # 7. Insert Images into Excel
             # Insert Yearly Plot into 'yearly_breach_report' sheet
