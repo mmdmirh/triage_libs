@@ -298,31 +298,34 @@ class WaitTimeAnalyzer:
         
         return summary.reset_index()
 
-    def plot_yearly_breach_trend(self, summary_df, priority_col='Priority Type (RFL)'):
+    def plot_yearly_breach_trend(self, summary_df, priority_col='Priority Type (RFL)', y_col='Breach_%'):
         """
-        Plots the trend of Breach % over years for each priority type using a Grouped Bar Chart.
+        Plots the trend of a metric over years for each priority type using a Grouped Bar Chart.
         
         Args:
             summary_df (pd.DataFrame): Output from generate_yearly_breach_report.
             priority_col (str): Column name for priority type (used for color/hue).
+            y_col (str): Column to plot on Y-axis (e.g. 'Breach_%', 'Total', 'Breach_Count').
         """
         plt.figure(figsize=(12, 6))
         
-        # Ensure percentages are numeric just in case
+        # Ensure data is safe
         plot_data = summary_df.copy()
         
-        # Check if priority col exists
+        # Check if cols exist
         if priority_col not in plot_data.columns:
             print(f"Error: Column '{priority_col}' not found in summary dataframe.")
             return
+        if y_col not in plot_data.columns:
+            print(f"Error: Column '{y_col}' not found. Available: {list(plot_data.columns)}")
+            return
 
         # Plot: Grouped Bar Chart
-        # x=Year, y=Breach_%, hue=Priority
-        sns.barplot(data=plot_data, x='Year', y='Breach_%', hue=priority_col, palette='viridis', edgecolor='black')
+        sns.barplot(data=plot_data, x='Year', y=y_col, hue=priority_col, palette='viridis', edgecolor='black')
         
-        plt.title("Yearly Breach Percentage by Priority Type")
+        plt.title(f"Yearly {y_col} by Priority Type")
         plt.xlabel("Year")
-        plt.ylabel("Breach Percentage (%)")
+        plt.ylabel(y_col)
         
         # Move legend outside if there are many types
         plt.legend(title="Priority Type", bbox_to_anchor=(1.05, 1), loc='upper left')
