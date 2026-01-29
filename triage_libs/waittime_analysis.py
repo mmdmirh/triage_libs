@@ -297,3 +297,36 @@ class WaitTimeAnalyzer:
         summary = summary[['Breach_Count', 'Total', 'Breach_%']]
         
         return summary.reset_index()
+
+    def plot_yearly_breach_trend(self, summary_df, priority_col='Priority Type (RFL)'):
+        """
+        Plots the trend of Breach % over years for each priority type using a Grouped Bar Chart.
+        
+        Args:
+            summary_df (pd.DataFrame): Output from generate_yearly_breach_report.
+            priority_col (str): Column name for priority type (used for color/hue).
+        """
+        plt.figure(figsize=(12, 6))
+        
+        # Ensure percentages are numeric just in case
+        plot_data = summary_df.copy()
+        
+        # Check if priority col exists
+        if priority_col not in plot_data.columns:
+            print(f"Error: Column '{priority_col}' not found in summary dataframe.")
+            return
+
+        # Plot: Grouped Bar Chart
+        # x=Year, y=Breach_%, hue=Priority
+        sns.barplot(data=plot_data, x='Year', y='Breach_%', hue=priority_col, palette='viridis', edgecolor='black')
+        
+        plt.title("Yearly Breach Percentage by Priority Type")
+        plt.xlabel("Year")
+        plt.ylabel("Breach Percentage (%)")
+        
+        # Move legend outside if there are many types
+        plt.legend(title="Priority Type", bbox_to_anchor=(1.05, 1), loc='upper left')
+        
+        plt.grid(axis='y', alpha=0.3)
+        plt.tight_layout()
+        plt.show()
