@@ -68,6 +68,44 @@ class WaitTimeAnalyzer:
         df['Target_Days'] = df[priority_col].apply(extract_days)
         return df
 
+    def standardize_priority_types(self, df, priority_col='Priority Type (RFL)'):
+        """
+        Standardizes Priority Types strings.
+        Maps plain 'Urgent' -> 'Urgent 14'
+        Maps plain 'Semi-urgent' -> 'Semi-urgent 3' (assuming 3 months ~ 90 days context)
+        """
+        df = df.copy()
+        
+        def clean_type(val):
+            s_val = str(val).strip()
+            
+            # Exact match replacements or specific logic
+            if s_val == 'Urgent':
+                return 'Urgent 14 - 14 days' # Normalized form
+            if s_val == 'Semi-urgent':
+                return 'Semi-urgent 03 - 3 months' # Normalized form
+                
+            return s_val
+
+        df[priority_col] = df[priority_col].apply(clean_type)
+        return df
+
+    def calculate_calendar_wait(self, df, auth_col='Authorized On', appt_col='First Appt'):
+        """
+        Calculates wait time in Calendar Days: Appointment Date - Authorized Date.
+        """
+        df = df.copy()
+        
+        # Convert to datetime
+        df[auth_col] = pd.to_datetime(df[auth_col], errors='coerce')
+        df[appt_col] = pd.to_datetime(df[appt_col], errors='coerce')
+        
+        # Calculate Difference
+        # (Appt - Auth).dt.days gives integer days
+        df['Wait_Time_Cal'] = (df[appt_col] - df[auth_col]).dt.days
+        
+        return df
+
     def identify_breaches(self, df, actual_wait_col='Auth to Appt', target_col='Target_Days'):
         """
         Compares actual wait time vs target to identify breaches.
@@ -144,7 +182,7 @@ class WaitTimeAnalyzer:
         # Sort by most breaches
         summary = summary.sort_values('Breach_Count', ascending=False)
         
-        return summary
+        return summary.reset_index()
 
     def run_analysis_pipeline(self, df, priority_col='Priority Type (RFL)', actual_wait_col='Auth to Appt'):
         """
@@ -295,18 +333,30 @@ class WaitTimeAnalyzer:
         
         return summary.reset_index()
 
+    def _get_priority_sort_key(self, priority_type):
+        """
+        Helper to sort priority types chronologically/numerically.
+        Order: Urgent 01...14 -> Semi-urgent 01...3
+        """
+        s = str(priority_type).lower()
+        
+        # Primary Rank: Urgent = 1, Semi = 2
+        rank = 2
+        if 'urgent' in s and 'semi' not in s:
+            rank = 1
+            
+        # Secondary Rank: Extract number
+        # Matches "01", "05", "14", "3" etc.
+        num = 999
+        match = re.search(r'(\d+)', s)
+        if match:
+            num = int(match.group(1))
+            
+        return (rank, num)
+
     def plot_yearly_breach_trend(self, summary_df, priority_col='Priority Type (RFL)', y_col='Breach_%', clinic_name=None, save_path=None, show_plot=True):
         """
         Plots the trend of a metric over years for each priority type using a Grouped Bar Chart.
-        
-        Args:
-            summary_df (pd.DataFrame): Output from generate_yearly_breach_report.
-            priority_col (str): Column name for priority type (used for color/hue).
-            y_col (str): Column to plot on Y-axis (e.g. 'Breach_%', 'Total', 'Breach_Count').
-            clinic_name (str): Optional. Filename or clinic name to display in title. 
-                               If a path is provided, it handles cleaning the name.
-            save_path (str): Optional path to save the plot image.
-            show_plot (bool): Whether to display the plot (default True).
         """
         plt.figure(figsize=(12, 6))
         
@@ -321,8 +371,14 @@ class WaitTimeAnalyzer:
             print(f"Error: Column '{y_col}' not found. Available: {list(plot_data.columns)}")
             return
 
-        # Plot: Grouped Bar Chart
-        sns.barplot(data=plot_data, x='Year', y=y_col, hue=priority_col, palette='viridis', edgecolor='black')
+        # SORT DATA CHRONOLOGICALLY
+        # Get unique types and sort them using helper
+        unique_types = plot_data[priority_col].unique()
+        sorted_types = sorted(unique_types, key=self._get_priority_sort_key)
+        
+        # Plot with explicit hue_order
+        sns.barplot(data=plot_data, x='Year', y=y_col, hue=priority_col, 
+                    hue_order=sorted_types, palette='viridis', edgecolor='black')
         
         # Construct Title
         title_text = f"Yearly {y_col} by Priority Type"
@@ -333,11 +389,9 @@ class WaitTimeAnalyzer:
         plt.xlabel("Year")
         plt.ylabel(y_col)
         
-        # Move legend outside if there are many types
+        # Move legend outside
         plt.legend(title="Priority Type", bbox_to_anchor=(1.05, 1), loc='upper left')
         
-        plt.grid(axis='y', alpha=0.3)
-        plt.tight_layout()
         plt.grid(axis='y', alpha=0.3)
         plt.tight_layout()
         
